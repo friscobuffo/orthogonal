@@ -23,22 +23,7 @@ def check_loops(all_cycles: list[list]):
                     intersec = intersection(cycle1, cycle2)
                     if len(intersec) == 3:
                         print('Intersection found', intersec)
-                        return False
-
-        # check three cycles made of four edges at a time 
-        # for cycle1 in four_cycles:
-        #     for cycle2 in four_cycles:
-        #         if cycle1 != cycle2:
-        #             intersec = intersection(cycle1, cycle2)
-        #             if len(intersec) == 2:
-        #                 for cycle3 in four_cycles:
-        #                     if cycle1 != cycle3 and cycle2  != cycle3:
-        #                         intersec1 = intersection(cycle1, cycle3)
-        #                         intersec1 += intersection(cycle2, cycle3)
-        #                         if len(intersec1) == 3:                        
-        #                             print('Intersection found', intersec)
-        #                             return False
-                                    
+                        return False                                    
         return True
 
 if __name__ == "__main__":
