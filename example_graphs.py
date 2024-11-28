@@ -25,7 +25,6 @@ def graph2():
     graph.add_edge(4, 5)
     graph.add_edge(1, 6)
     graph.add_edge(6, 5)
-    graph.add_edge(3, 5)
     return graph
 
 def graph3():
@@ -66,6 +65,34 @@ def graph5():
 
     return graph
 
+
+def graph6():
+    graph = Graph(17)
+    graph.add_edge(0, 1)
+    graph.add_edge(0, 2)
+    graph.add_edge(1, 3)
+    graph.add_edge(2, 3)
+    graph.add_edge(2, 4)
+    graph.add_edge(3, 5)
+    graph.add_edge(4, 5)
+    graph.add_edge(1, 6)
+    graph.add_edge(6, 7)
+    graph.add_edge(3, 7)
+    
+    graph.add_edge(0, 8)
+    graph.add_edge(8, 9)
+    graph.add_edge(10, 9)
+    graph.add_edge(10, 2)
+    graph.add_edge(10, 11)
+    graph.add_edge(12, 11)
+    graph.add_edge(12, 13)
+    graph.add_edge(16, 13)
+    graph.add_edge(16, 15)
+    graph.add_edge(16, 8)
+    graph.add_edge(14, 15)
+    graph.add_edge(14, 13)
+    return graph
+
 def get_example_graph(n):
     if n==1:
         return graph1()
@@ -77,4 +104,6 @@ def get_example_graph(n):
         return graph4()
     if n==5:
         return graph5()
+    if n == 6:
+        return graph6()
     return None

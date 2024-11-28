@@ -12,10 +12,10 @@ def check_graph_udlr(g: Graph):
         for i in range(len(g.adjacency_list)):
             for j in g.get_neighbors(i):
                 if(i < j):
-                    l = model.addVar(vtype=GRB.BINARY, name=f"{i}{j}l")
-                    r = model.addVar(vtype=GRB.BINARY, name=f"{i}{j}r") 
-                    u = model.addVar(vtype=GRB.BINARY, name=f"{i}{j}u") 
-                    d = model.addVar(vtype=GRB.BINARY, name=f"{i}{j}d") 
+                    l = model.addVar(vtype=GRB.BINARY, name=f"{i}_{j}_left")
+                    r = model.addVar(vtype=GRB.BINARY, name=f"{i}_{j}_right") 
+                    u = model.addVar(vtype=GRB.BINARY, name=f"{i}_{j}_up") 
+                    d = model.addVar(vtype=GRB.BINARY, name=f"{i}_{j}_down") 
                     
                     variable_matrix[i][j] = l, r, u, d
                     variable_matrix[j][i] = r, l, d, u                
@@ -33,31 +33,34 @@ def check_graph_udlr(g: Graph):
         
         
         for cycle in g.find_all_cycles():
-            sum_1010 = sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][0] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][2] for i in range(len(cycle)))
-            sum_1001 = sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][0] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][3] for i in range(len(cycle)))
-            sum_0101 = sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][1] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][3] for i in range(len(cycle)))
-            sum_0110 = sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][1] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][2] for i in range(len(cycle)))
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][0] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][2] for i in range(len(cycle))) >= 2) # at least one left-up angle
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][0] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][3] for i in range(len(cycle))) >= 2)
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][1] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][3] for i in range(len(cycle))) >= 2)
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][1] + variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][2] for i in range(len(cycle))) >= 2)
             
-            model.addConstr(sum_1010 >= 2) # at least one left-up angle
-            model.addConstr(sum_1001 >= 2)
-            model.addConstr(sum_0101 >= 2)
-            model.addConstr(sum_0110 >= 2)
-            
+            sum_0101 = sum(variable_matrix[i][j][1] + variable_matrix[j][i][3] for i in range(len(g.adjacency_list)) for j in g.get_neighbors(i))
+            sum_1010 = sum(variable_matrix[i][j][0] + variable_matrix[j][i][2] for i in range(len(g.adjacency_list)) for j in g.get_neighbors(i))
+            sum_1001 = sum(variable_matrix[i][j][0] + variable_matrix[j][i][3] for i in range(len(g.adjacency_list)) for j in g.get_neighbors(i))
+            sum_0110 = sum(variable_matrix[i][j][1] + variable_matrix[j][i][2] for i in range(len(g.adjacency_list)) for j in g.get_neighbors(i))
+               
             model.addConstr(sum_0101 == sum_1010) # right-down angles == left-up angles
             model.addConstr(sum_1001 == sum_0110)
             
         model.optimize()
-
+    
         if model.status == GRB.OPTIMAL:
                 print("Solution found.")
                 for var in model.getVars():
-                    print('%s %g' % (var.VarName, var.X))
+                    if var.X > 0:   
+                        print('%s %g' % (var.VarName, var.X))
                 return True
         else:
                 print("No solution found.")
                 return False
 
 if __name__ == "__main__":
-    for i in range(1, 6):
-        graph = get_example_graph(i)
+    # for i in range(1, 7):
+    #     graph = get_example_graph(i)
+    #     print(check_graph_udlr(graph))
+        graph = get_example_graph(6)
         print(check_graph_udlr(graph))
