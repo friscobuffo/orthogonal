@@ -33,6 +33,13 @@ def check_graph_udlr(g: Graph):
 
                 
         for cycle in g.find_all_cycles():
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][0] for i in range(len(cycle))) >= 1) 
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][1] for i in range(len(cycle))) >= 1) 
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][2] for i in range(len(cycle))) >= 1) 
+            model.addConstr(sum(variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[i]][3] for i in range(len(cycle))) >= 1) 
+            
+  
+            
             for i in range(len(cycle)):
                 model.addConstr(sum(variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][0] + variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][1] for j in range(i, i+len(cycle)-2)) >= 1) # at least one left or right each n-2 edges
                 
@@ -65,10 +72,10 @@ def check_graph_udlr(g: Graph):
             
         model.optimize()
         
-        for i in range(len(g.adjacency_list)):
-            for j in g.get_neighbors(i):
-                if(i < j):
-                    print(f"{i}_{j} = {variable_matrix[i][j][0].x}, {variable_matrix[i][j][1].x}, {variable_matrix[i][j][2].x}, {variable_matrix[i][j][3].x}")
+        # for i in range(len(g.adjacency_list)):
+        #     for j in g.get_neighbors(i):
+        #         if(i < j):
+        #             print(f"{i}_{j} = {variable_matrix[i][j][0].x}, {variable_matrix[i][j][1].x}, {variable_matrix[i][j][2].x}, {variable_matrix[i][j][3].x}")
         
         if model.status == GRB.OPTIMAL:
                 print("Solution found.")
