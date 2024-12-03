@@ -4,7 +4,7 @@ from graph import Graph
 import gurobipy as gp
 
 def check_angles(model, cycle, variable_matrix, i, angle_matrix, direction1, direction2, angle, triggers):
-        print(cycle[i], cycle[(i + 1) % len(cycle)], cycle[(i + 2) % len(cycle)])
+
         x = variable_matrix[cycle[i]][cycle[(i + 1) % len(cycle)]][direction1] 
         y = variable_matrix[cycle[(i + 1) % len(cycle)]][cycle[(i + 2) % len(cycle)]][direction2]
 
@@ -56,15 +56,6 @@ def check_graph_udlr(g: Graph):
             model.addConstr(sum(variable_matrix[cycle[i]][cycle[(i + 1) % len(cycle)]][1] for i in range(len(cycle))) >= 1) 
             model.addConstr(sum(variable_matrix[cycle[i]][cycle[(i + 1) % len(cycle)]][2] for i in range(len(cycle))) >= 1) 
             model.addConstr(sum(variable_matrix[cycle[i]][cycle[(i + 1) % len(cycle)]][3] for i in range(len(cycle))) >= 1) 
-            
-            # for i in range(len(cycle)):
-            #     model.addConstr(sum(variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][0] + variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][1] for j in range(i, i+len(cycle)-2)) >= 1) # at least one horizontal each n-2 edges
-                
-            #     model.addConstr(sum(variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][2] + variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][3] for j in range(i, i+len(cycle)-2)) >= 1) # at least one vertical 
-                
-            #     model.addConstr(sum(variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][0] + variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][1] for j in range(i, i+len(cycle)-2)) <= len(cycle)-3) # at most len(cycle)-2 horizontal
-                
-            #     model.addConstr(sum(variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][2] + variable_matrix[cycle[j % len(cycle)]][cycle[(j + 1) % len(cycle)]][3] for j in range(i, i+len(cycle)-2)) <= len(cycle)-3) # at most len(cycle)-2 vertical
                 
             angle_matrix = [[None for _ in range(4)] for _ in range(len(g.adjacency_list))]
             
@@ -85,6 +76,9 @@ def check_graph_udlr(g: Graph):
         model.addConstr(sum(angle_matrix[cycle[i]][2] for i in range(len(cycle))) >= 1)
         model.addConstr(sum(angle_matrix[cycle[i]][3] for i in range(len(cycle))) >= 1)
         
+        model.addConstr(sum(angle_matrix[cycle[i]][2] for i in range(len(cycle))) == sum(angle_matrix[cycle[i]][1] for i in range(len(cycle)))) # left_down = right_up
+        model.addConstr(sum(angle_matrix[cycle[i]][0] for i in range(len(cycle))) == sum(angle_matrix[cycle[i]][3] for i in range(len(cycle)))) # left_up = right_down
+ 
         model.optimize()
         
         # for trigger in triggers:
