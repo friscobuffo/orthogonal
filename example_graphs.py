@@ -65,7 +65,6 @@ def graph5():
 
     return graph
 
-
 def graph6():
     graph = Graph(17)
     graph.add_edge(0, 1)
@@ -94,16 +93,19 @@ def graph6():
     return graph
 
 def get_example_graph(n):
-    if n==1:
+    if n == 1:
         return graph1()
-    if n==2:
+    if n == 2:
         return graph2()
-    if n==3:
+    if n == 3:
         return graph3()
-    if n==4:
+    if n == 4:
         return graph4()
-    if n==5:
+    if n == 5:
         return graph5()
     if n == 6:
         return graph6()
     return None
+
+def all_example_graphs_indexes():
+    return range(1,7)

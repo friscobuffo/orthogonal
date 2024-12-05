@@ -44,3 +44,6 @@ class Graph:
             find_all_cycles_with_node(self, node, visited, [], cycles, visitedGlobal)
             visitedGlobal[node] = True
         return cycles
+    
+    def __len__(self):
+        return self.size()
