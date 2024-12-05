@@ -92,6 +92,37 @@ def graph6():
     graph.add_edge(14, 13)
     return graph
 
+#      6 ----- 8
+#      |       |
+#  4 - 0 - 2   |
+#  |   |   |   |
+#  5 - 1 - 3   |
+#      |       |
+#      7 ----- 9
+
+
+def graph7():
+    graph = Graph(10)
+    graph.add_edge(0, 1)
+    graph.add_edge(0, 2)
+    graph.add_edge(2, 3)
+    graph.add_edge(3, 1)
+
+    graph.add_edge(0, 4)
+    graph.add_edge(1, 5)
+    graph.add_edge(4, 5)
+
+
+    graph.add_edge(0, 6)
+    graph.add_edge(1, 7)
+
+
+    graph.add_edge(6, 8)
+    graph.add_edge(7, 9)
+    graph.add_edge(8, 9)
+
+    return graph
+
 def get_example_graph(n):
     if n == 1:
         return graph1()
@@ -105,7 +136,9 @@ def get_example_graph(n):
         return graph5()
     if n == 6:
         return graph6()
+    if n == 7:
+        return graph7()
     return None
 
 def all_example_graphs_indexes():
-    return range(1,7)
+    return range(1,8)
