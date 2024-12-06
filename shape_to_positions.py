@@ -2,6 +2,19 @@ from graph import Graph
 from gurobipy import Model, GRB
 import gurobipy as gp
 
+def initialize_nodes_variables(model: Model, graph: Graph):
+    nodes_x_variables = []
+    nodes_y_variables = []
+    for node in range(graph.size()):
+        nodes_x_variables.append(model.addVar(name=f"x_{node}", vtype=GRB.CONTINUOUS))
+        nodes_y_variables.append(model.addVar(name=f"y_{node}", vtype=GRB.CONTINUOUS))
+    return nodes_x_variables, nodes_y_variables
+
+def constraints_positive_coordinates(model: Model, graph: Graph, nodes_x_variables, nodes_y_variables):
+    for node in range(graph.size()):
+        model.addConstr(nodes_x_variables[node] >= 0)
+        model.addConstr(nodes_y_variables[node] >= 0)
+
 def is_edge_horizontal(node, neighbor, shape):
     return shape[(node, neighbor)] == "left" or shape[(node, neighbor)] == "right"
 
@@ -65,7 +78,6 @@ def constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables
         node_y_var = nodes_y_variables[node]
         for neighbor in graph.get_neighbors(node):
             if (neighbor > node): continue
-            # assumo nodo a sinistra di neighbor
             neighbor_x_var = nodes_x_variables[neighbor]
             neighbor_y_var = nodes_y_variables[neighbor]
             if is_edge_horizontal(node, neighbor, shape):
@@ -74,18 +86,8 @@ def constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables
                 function_to_call = constraints_nodes_inside_vertical_edge
             function_to_call(graph, model, shape, node, neighbor, node_x_var, node_y_var, neighbor_x_var, neighbor_y_var,
                              nodes_x_variables, nodes_y_variables)
-            
-def shape_to_nodes_positions(graph: Graph, shape: dict):
-    gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
-    model = Model("my_model")
-    nodes_x_variables = []
-    nodes_y_variables = []
-    for node in range(graph.size()):
-        nodes_x_variables.append(model.addVar(name=f"x_{node}", vtype=GRB.CONTINUOUS))
-        model.addConstr(nodes_x_variables[node] >= 0)
-        nodes_y_variables.append(model.addVar(name=f"y_{node}", vtype=GRB.CONTINUOUS))
-        model.addConstr(nodes_y_variables[node] >= 0)
-    # constraints of edges directions
+
+def constraints_from_edges_directions(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
     for node in range(graph.size()):
         for neighbor in graph.get_neighbors(node):
             if (neighbor > node): continue
@@ -104,7 +106,8 @@ def shape_to_nodes_positions(graph: Graph, shape: dict):
                     model.addConstr(nodes_x_variables[node] + 1 <= nodes_x_variables[neighbor])
             else:
                 assert False
-    # constraints to avoid overlapping of nodes
+
+def constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables):
     for node in range(graph.size()):
         node_x = nodes_x_variables[node]
         node_y = nodes_y_variables[node]
@@ -123,10 +126,16 @@ def shape_to_nodes_positions(graph: Graph, shape: dict):
             model.addConstr(other_node_y-node_y <= 0.1 + M*(1-aux4))
             model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
             # model.addConstr((nodes_x_variables[node] - nodes_x_variables[other_node])**2 + (nodes_y_variables[node] - nodes_y_variables[other_node])**2 >= 1)
+    
+def shape_to_nodes_positions(graph: Graph, shape: dict):
+    gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
+    model = Model("my_model")
+    nodes_x_variables, nodes_y_variables = initialize_nodes_variables(model, graph)
+    constraints_positive_coordinates(model, graph, nodes_x_variables, nodes_y_variables)
+    constraints_from_edges_directions(graph, model, nodes_x_variables, nodes_y_variables, shape)
+    constraints_for_no_nodes_overlapping(graph, model, nodes_x_variables, nodes_y_variables)
     constraints_nodes_inside_edges(graph, model, nodes_x_variables, nodes_y_variables, shape)
-    # objective function to minimize values of positions
     model.setObjective(sum(nodes_x_variables) + sum(nodes_y_variables), GRB.MINIMIZE)
-    # optimize
     model.optimize()
     if model.status == GRB.OPTIMAL:
         nodes_positions = dict()
