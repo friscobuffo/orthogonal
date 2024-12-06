@@ -114,6 +114,63 @@ def graph7():
 
     return graph
 
+def graph8():
+    graph = Graph(40)
+    graph.add_edge(12, 11)
+    graph.add_edge(10, 11)
+    graph.add_edge(9, 10)
+    graph.add_edge(8, 9)
+    graph.add_edge(32, 33)
+    graph.add_edge(13, 22)
+    graph.add_edge(23, 24)
+    graph.add_edge(35, 21)
+    graph.add_edge(21, 36)
+    graph.add_edge(0, 30)
+    graph.add_edge(30, 14)
+    graph.add_edge(21, 25)
+    graph.add_edge(25, 7)
+    graph.add_edge(15, 27)
+    graph.add_edge(1, 16)
+    graph.add_edge(16, 29)
+    graph.add_edge(28, 31)
+    graph.add_edge(31, 6)
+    graph.add_edge(37, 20)
+    graph.add_edge(20, 38)
+    graph.add_edge(17, 18)
+    graph.add_edge(19, 39)
+    graph.add_edge(2, 3)
+    graph.add_edge(3, 4)
+    graph.add_edge(4, 5)
+    graph.add_edge(26, 34)
+
+    graph.add_edge(34, 33)
+    graph.add_edge(32, 10)
+    graph.add_edge(12, 0)
+    graph.add_edge(0, 1)
+    graph.add_edge(1, 2)
+    graph.add_edge(13, 30)
+    graph.add_edge(16, 17)
+    graph.add_edge(14, 15)
+    graph.add_edge(15, 29)
+    graph.add_edge(11, 22)
+    graph.add_edge(22, 35)
+    graph.add_edge(37, 18)
+    graph.add_edge(18, 3)
+    graph.add_edge(9, 23)
+    graph.add_edge(23, 36)
+    graph.add_edge(38, 19)
+    graph.add_edge(19, 4)
+    graph.add_edge(21, 27)
+    graph.add_edge(27, 28)
+    graph.add_edge(24, 25)
+    graph.add_edge(31, 39)
+    graph.add_edge(7, 8)
+    graph.add_edge(7, 6)
+    graph.add_edge(5, 6)
+    graph.add_edge(32, 26)
+
+    return graph
+
 def get_example_graph(n):
     if n == 1:
         return graph1()
@@ -129,7 +186,9 @@ def get_example_graph(n):
         return graph6()
     if n == 7:
         return graph7()
+    if n == 8:
+        return graph8()
     return None
 
 def all_example_graphs_indexes():
-    return range(1,8)
+    return range(1,9)
