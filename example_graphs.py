@@ -92,15 +92,6 @@ def graph6():
     graph.add_edge(14, 13)
     return graph
 
-#      6 ----- 8
-#      |       |
-#  4 - 0 - 2   |
-#  |   |   |   |
-#  5 - 1 - 3   |
-#      |       |
-#      7 ----- 9
-
-
 def graph7():
     graph = Graph(10)
     graph.add_edge(0, 1)
