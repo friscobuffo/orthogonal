@@ -1,4 +1,4 @@
-from pysat.solvers import Minisat22
+from pysat.solvers import Glucose42 as Minisat22
 from graph import Graph
 
 def _initialize_variables(graph: Graph):
@@ -7,6 +7,7 @@ def _initialize_variables(graph: Graph):
     is_edge_left_variable = [[-1 for _ in range(graph.size())] for _ in range(graph.size())]
     is_edge_right_variable = [[-1 for _ in range(graph.size())] for _ in range(graph.size())]
     next_var = 1
+    variable_to_edge = [None]
     for i in range(graph.size()):
         for j in graph.get_neighbors(i):
             is_edge_up_variable[i][j] = next_var
@@ -17,7 +18,11 @@ def _initialize_variables(graph: Graph):
             next_var += 1
             is_edge_right_variable[i][j] = next_var
             next_var += 1
-    return is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable
+            variable_to_edge.append((i,j))
+            variable_to_edge.append((i,j))
+            variable_to_edge.append((i,j))
+            variable_to_edge.append((i,j))
+    return is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge
 
 def _get_variables(variables, i, j):
     assert variables[i][j] != -1
@@ -140,13 +145,41 @@ def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edg
             else: assert False
     return shape
 
+from time import perf_counter
+
 def build_shape(graph: Graph):
-    is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable = _initialize_variables(graph)
+    is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
+    timer_start = perf_counter()
     cycles = graph.find_all_cycles()
-    with Minisat22() as solver:
+    with Minisat22(with_proof=True) as solver:
         _add_constraints_one_direction_per_edge(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_constraints_opposite_edges(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_nodes_constraints(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_cycles_constraints(cycles, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
-        if solver.solve():
+        print(f"SAT constraints generation time: {perf_counter() - timer_start}")
+        timer_start = perf_counter()
+        solved = solver.solve()
+        print(f"SAT solving time: {perf_counter() - timer_start}")
+        if solved:
             return _model_solution_to_shape(graph, solver.get_model(), is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
+        else:
+            print("NOT SOLVED")
+            proof = solver.get_proof()
+            print(proof)
+            for elem in proof:
+                clauses = elem.split(sep=" ")
+                if len(clauses) != 2: continue
+                var = abs(int(clauses[0]))
+                edge = variable_to_edge[var]
+                graph.remove_edge(edge[0], edge[1])
+                new_node = graph.size()
+                graph.add_node()
+                graph.add_edge(edge[0], new_node)
+                graph.add_edge(edge[1], new_node)
+                print("TRYING AGAIN")
+                return build_shape(graph)
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("DID NOT FOUND A GOOD CLAUSE")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")

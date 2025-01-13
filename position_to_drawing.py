@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 def nodes_positions_to_drawing(graph: Graph, nodes_positions: dict):
     # draw nodes
     for node in range(graph.size()):
-        plt.plot(nodes_positions[node][0], nodes_positions[node][1], 'ro')
+        plt.plot(nodes_positions[node][0], nodes_positions[node][1], 'o', color=graph.nodes_color[node], markersize=8)
         plt.text(nodes_positions[node][0], nodes_positions[node][1], str(node), fontsize=15, ha='right')
     # draw edges
     for node in range(graph.size()):

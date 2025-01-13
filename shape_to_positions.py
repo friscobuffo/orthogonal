@@ -63,11 +63,32 @@ def _constraints_nodes_inside_horizontal_edge(graph: Graph, model: Model, left, 
         # (a_y != o_y) or (o_x < a_x) or (o_x > b_x)
         # (a_y > o_y) or (a_y < o_y) or (o_x < a_x) or (o_x > b_x)
 
-        model.addConstr(left_y_var - other_node_y_var >= 0.5 - BIG_M*(1-aux1))
-        model.addConstr(other_node_y_var - left_y_var >= 0.5 - BIG_M*(1-aux2))
-        model.addConstr(left_x_var - other_node_x_var >= 0.5 - BIG_M*(1-aux3))
-        model.addConstr(other_node_x_var - right_x_var >= 0.5 - BIG_M*(1-aux4))
+        model.addConstr(left_y_var - other_node_y_var >= 1 - BIG_M*(1-aux1))
+        model.addConstr(other_node_y_var - left_y_var >= 1 - BIG_M*(1-aux2))
+        model.addConstr(left_x_var - other_node_x_var >= 1 - BIG_M*(1-aux3))
+        model.addConstr(other_node_x_var - right_x_var >= 1 - BIG_M*(1-aux4))
         model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
+
+def _expand_edge(graph: Graph, smaller_node, bigger_node, bigger_direction_function, smaller_direction_function, shape, is_edge_already_computed, can_node_be_skipped):
+    while (True): # get the most right/up node
+        bigger_node_neighbor = bigger_direction_function(graph, bigger_node, shape)
+        if bigger_node_neighbor is None: break
+        can_node_be_skipped[bigger_node] = True
+        for n in graph.get_neighbors(bigger_node):
+            can_node_be_skipped[n] = True
+        is_edge_already_computed[bigger_node][bigger_node_neighbor] = True
+        is_edge_already_computed[bigger_node_neighbor][bigger_node] = True
+        bigger_node = bigger_node_neighbor
+    while (True): # get the most left/down node
+        smaller_node_neighbor = smaller_direction_function(graph, smaller_node, shape)
+        if smaller_node_neighbor is None: break
+        can_node_be_skipped[smaller_node] = True
+        for n in graph.get_neighbors(smaller_node):
+            can_node_be_skipped[n] = True
+        is_edge_already_computed[smaller_node][smaller_node_neighbor] = True
+        is_edge_already_computed[smaller_node_neighbor][smaller_node] = True
+        smaller_node = smaller_node_neighbor
+    return smaller_node, bigger_node
 
 def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
     is_edge_already_computed = [[False for _ in range(len(graph))] for _ in range(len(graph))]
@@ -77,75 +98,24 @@ def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variable
             if is_edge_already_computed[neighbor][node]: continue
             is_edge_already_computed[node][neighbor] = True
             is_edge_already_computed[neighbor][node] = True
+            can_node_be_skipped = [False for _ in range(len(graph))]
+            for n in graph.get_neighbors(node):
+                can_node_be_skipped[n] = True
+            for n in graph.get_neighbors(neighbor):
+                can_node_be_skipped[n] = True
             if _is_edge_horizontal(node, neighbor, shape):
-                is_node_in_between = [False for _ in range(len(graph))] # nodes that are in between the left and right nodes
-                is_node_neighbor = [False for _ in range(len(graph))] # nodes that are neighbors of left, right and in between nodes
-                for n in graph.get_neighbors(node):
-                    is_node_neighbor[n] = True
-                for n in graph.get_neighbors(neighbor):
-                    is_node_neighbor[n] = True
                 if shape[(node, neighbor)] == "left":
                     left, right = neighbor, node
                 else:
                     left, right = node, neighbor
-                while (True): # get the most right node
-                    right_neighbor = _has_node_a_right_neighbor(graph, right, shape)
-                    if right_neighbor is None: break
-                    is_node_in_between[right] = True
-                    for n in graph.get_neighbors(right):
-                        is_node_neighbor[n] = True
-                    is_edge_already_computed[right][right_neighbor] = True
-                    is_edge_already_computed[right_neighbor][right] = True
-                    right = right_neighbor
-                while (True): # get the most left node
-                    left_neighbor = _has_node_a_left_neighbor(graph, left, shape)
-                    if left_neighbor is None: break
-                    is_node_in_between[left] = True
-                    for n in graph.get_neighbors(left):
-                        is_node_neighbor[n] = True
-                    is_edge_already_computed[left][left_neighbor] = True
-                    is_edge_already_computed[left_neighbor][left] = True
-                    left = left_neighbor
-                can_node_be_skipped = [False for _ in range(len(graph))]
-                for n in range(len(graph)):
-                    if is_node_in_between[n] or is_node_neighbor[n]:
-                        can_node_be_skipped[n] = True
-                        continue
+                left, right = _expand_edge(graph, left, right, _has_node_a_right_neighbor, _has_node_a_left_neighbor, shape, is_edge_already_computed, can_node_be_skipped)
                 _constraints_nodes_inside_horizontal_edge(graph, model, left, right, nodes_x_variables, nodes_y_variables, can_node_be_skipped)
             else:
-                is_node_in_between = [False for _ in range(len(graph))] # nodes that are in between the left and right nodes
-                is_node_neighbor = [False for _ in range(len(graph))] # nodes that are neighbors of left, right and in between nodes
-                for n in graph.get_neighbors(node):
-                    is_node_neighbor[n] = True
-                for n in graph.get_neighbors(neighbor):
-                    is_node_neighbor[n] = True
                 if shape[(node, neighbor)] == "up":
                     down, up = node, neighbor
                 else:
                     down, up = neighbor, node
-                while (True): # get the most up node
-                    up_neighbor = _has_node_an_up_neighbor(graph, up, shape)
-                    if up_neighbor is None: break
-                    is_node_in_between[up] = True
-                    for n in graph.get_neighbors(up):
-                        is_node_neighbor[n] = True
-                    is_edge_already_computed[up][up_neighbor] = True
-                    is_edge_already_computed[up_neighbor][up] = True
-                    up = up_neighbor
-                while (True): # get the most down node
-                    down_neighbor = _has_node_a_down_neighbor(graph, down, shape)
-                    if down_neighbor is None: break
-                    is_node_in_between[down] = True
-                    for n in graph.get_neighbors(down):
-                        is_node_neighbor[n] = True
-                    is_edge_already_computed[down][down_neighbor] = True
-                    is_edge_already_computed[down_neighbor][down] = True
-                    down = down_neighbor
-                can_node_be_skipped = [False for _ in range(len(graph))]
-                for n in range(len(graph)):
-                    if is_node_in_between[n] or is_node_neighbor[n]:
-                        can_node_be_skipped[n] = True
-                        continue
+                down, up = _expand_edge(graph, down, up, _has_node_an_up_neighbor, _has_node_a_down_neighbor, shape, is_edge_already_computed, can_node_be_skipped)                    
                 _constraints_nodes_inside_horizontal_edge(graph, model, down, up, nodes_y_variables, nodes_x_variables, can_node_be_skipped)
 
 def _constraints_from_edges_directions(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
@@ -168,12 +138,13 @@ def _constraints_from_edges_directions(graph: Graph, model: Model, nodes_x_varia
             else:
                 assert False
 
-def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables):
+def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
     for node in range(graph.size()):
         node_x = nodes_x_variables[node]
         node_y = nodes_y_variables[node]
         for other_node in range(node):
             if (other_node > node): continue
+            if (node, other_node) in shape: continue
             aux1 = model.addVar(vtype=GRB.BINARY)
             aux2 = model.addVar(vtype=GRB.BINARY)
             aux3 = model.addVar(vtype=GRB.BINARY)
@@ -185,18 +156,23 @@ def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_va
             model.addConstr(other_node_x-node_x >= 1 - BIG_M*(1-aux3))
             model.addConstr(other_node_y-node_y >= 1 - BIG_M*(1-aux4))
             model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
-            # model.addConstr((nodes_x_variables[node] - nodes_x_variables[other_node])**2 + (nodes_y_variables[node] - nodes_y_variables[other_node])**2 >= 1)
     
+from time import perf_counter
+
 def shape_to_nodes_positions(graph: Graph, shape: dict):
     gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
     model = Model("my_model")
     nodes_x_variables, nodes_y_variables = _initialize_nodes_variables(model, graph)
+    timer_start = perf_counter()
     _constraints_positive_coordinates(model, graph, nodes_x_variables, nodes_y_variables)
     _constraints_from_edges_directions(graph, model, nodes_x_variables, nodes_y_variables, shape)
-    _constraints_for_no_nodes_overlapping(graph, model, nodes_x_variables, nodes_y_variables)
+    _constraints_for_no_nodes_overlapping(graph, model, nodes_x_variables, nodes_y_variables, shape)
     _constraints_nodes_inside_edges(graph, model, nodes_x_variables, nodes_y_variables, shape)
+    print(f"Gurobi constraints generation time: {perf_counter() - timer_start}")
     model.setObjective(sum(nodes_x_variables) + sum(nodes_y_variables), GRB.MINIMIZE)
+    timer_start = perf_counter()
     model.optimize()
+    print(f"Gurobi solving time: {perf_counter() - timer_start}")
     if model.status == GRB.OPTIMAL:
         nodes_positions = dict()
         for node in range(graph.size()):
