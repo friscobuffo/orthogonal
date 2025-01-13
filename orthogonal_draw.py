@@ -15,9 +15,11 @@ def make_orthogonal_draw(graph: Graph):
         if nodes_positions:
             nodes_positions_to_drawing(graph, nodes_positions)
         else:
-            print("error: admissible shape but drawing not found")
+            print("ERROR: admissible shape but drawing not found")
+        print("finished...\n\n\n\n")
 
 if __name__ == "__main__":
     for i in all_example_graphs_indexes():
         graph = get_example_graph(i)
         make_orthogonal_draw(graph)
+        input("press enter key to continue...")
