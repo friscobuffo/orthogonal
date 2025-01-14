@@ -1,24 +1,7 @@
 from graph import Graph
 from gurobipy import Model, GRB
 import gurobipy as gp
-
-BIG_M = 500
-
-def _initialize_nodes_variables(model: Model, graph: Graph):
-    nodes_x_variables = []
-    nodes_y_variables = []
-    for node in range(graph.size()):
-        nodes_x_variables.append(model.addVar(name=f"x_{node}", vtype=GRB.CONTINUOUS))
-        nodes_y_variables.append(model.addVar(name=f"y_{node}", vtype=GRB.CONTINUOUS))
-    return nodes_x_variables, nodes_y_variables
-
-def _constraints_positive_coordinates(model: Model, graph: Graph, nodes_x_variables, nodes_y_variables):
-    for node in range(graph.size()):
-        model.addConstr(nodes_x_variables[node] >= 0)
-        model.addConstr(nodes_y_variables[node] >= 0)
-
-def _is_edge_horizontal(node, neighbor, shape):
-    return shape[(node, neighbor)] == "left" or shape[(node, neighbor)] == "right"
+from shape_builder import Shape
 
 def _has_node_a_right_neighbor(graph: Graph, node, shape):
     for neighbor in graph.get_neighbors(node):
@@ -43,6 +26,21 @@ def _has_node_a_down_neighbor(graph: Graph, node, shape):
         if shape[(node, neighbor)] == "down":
             return neighbor
     return None
+
+BIG_M = 500
+
+def _initialize_nodes_variables(model: Model, graph: Graph):
+    nodes_x_variables = []
+    nodes_y_variables = []
+    for node in range(graph.size()):
+        nodes_x_variables.append(model.addVar(name=f"x_{node}", vtype=GRB.CONTINUOUS))
+        nodes_y_variables.append(model.addVar(name=f"y_{node}", vtype=GRB.CONTINUOUS))
+    return nodes_x_variables, nodes_y_variables
+
+def _constraints_positive_coordinates(model: Model, graph: Graph, nodes_x_variables, nodes_y_variables):
+    for node in range(graph.size()):
+        model.addConstr(nodes_x_variables[node] >= 0)
+        model.addConstr(nodes_y_variables[node] >= 0)
 
 def _constraints_nodes_inside_horizontal_edge(graph: Graph, model: Model, left, right, nodes_x_variables, nodes_y_variables, can_node_be_skipped):
     left_x_var = nodes_x_variables[left]
@@ -90,7 +88,7 @@ def _expand_edge(graph: Graph, smaller_node, bigger_node, bigger_direction_funct
         smaller_node = smaller_node_neighbor
     return smaller_node, bigger_node
 
-def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
+def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape: Shape):
     is_edge_already_computed = [[False for _ in range(len(graph))] for _ in range(len(graph))]
     for node in range(len(graph)):
         for neighbor in graph.get_neighbors(node):
@@ -103,35 +101,34 @@ def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variable
                 can_node_be_skipped[n] = True
             for n in graph.get_neighbors(neighbor):
                 can_node_be_skipped[n] = True
-            if _is_edge_horizontal(node, neighbor, shape):
-                if shape[(node, neighbor)] == "left":
+            if shape.is_horizontal(node, neighbor):
+                if shape.is_left(node, neighbor):
                     left, right = neighbor, node
                 else:
                     left, right = node, neighbor
                 left, right = _expand_edge(graph, left, right, _has_node_a_right_neighbor, _has_node_a_left_neighbor, shape, is_edge_already_computed, can_node_be_skipped)
                 _constraints_nodes_inside_horizontal_edge(graph, model, left, right, nodes_x_variables, nodes_y_variables, can_node_be_skipped)
             else:
-                if shape[(node, neighbor)] == "up":
+                if shape.is_up(node, neighbor):
                     down, up = node, neighbor
                 else:
                     down, up = neighbor, node
                 down, up = _expand_edge(graph, down, up, _has_node_an_up_neighbor, _has_node_a_down_neighbor, shape, is_edge_already_computed, can_node_be_skipped)                    
                 _constraints_nodes_inside_horizontal_edge(graph, model, down, up, nodes_y_variables, nodes_x_variables, can_node_be_skipped)
 
-def _constraints_from_edges_directions(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape):
+def _constraints_from_edges_directions(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape: Shape):
     for node in range(graph.size()):
         for neighbor in graph.get_neighbors(node):
             if (neighbor > node): continue
-            direction = shape[(node, neighbor)]
-            if direction == "up" or direction == "down":
+            if shape.is_vertical(node, neighbor):
                 model.addConstr(nodes_x_variables[node] == nodes_x_variables[neighbor])
-                if direction == "up":
+                if shape.is_up(node, neighbor):
                     model.addConstr(nodes_y_variables[node] +1 <= nodes_y_variables[neighbor])
                 else:
                     model.addConstr(nodes_y_variables[node] >= nodes_y_variables[neighbor] + 1)
-            elif direction == "left" or direction == "right":
+            elif shape.is_horizontal(node, neighbor):
                 model.addConstr(nodes_y_variables[node] == nodes_y_variables[neighbor])
-                if direction == "left":
+                if shape.is_left(node, neighbor):
                     model.addConstr(nodes_x_variables[node] >= nodes_x_variables[neighbor] + 1)
                 else:
                     model.addConstr(nodes_x_variables[node] + 1 <= nodes_x_variables[neighbor])
@@ -158,8 +155,9 @@ def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_va
             model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
     
 from time import perf_counter
+from shape_to_equivalence_class import EquivalenceClasses
 
-def shape_to_nodes_positions(graph: Graph, shape: dict):
+def shape_to_nodes_positions(graph: Graph, shape: Shape):
     gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
     model = Model("my_model")
     nodes_x_variables, nodes_y_variables = _initialize_nodes_variables(model, graph)
@@ -173,6 +171,8 @@ def shape_to_nodes_positions(graph: Graph, shape: dict):
     timer_start = perf_counter()
     model.optimize()
     print(f"Gurobi solving time: {perf_counter() - timer_start}")
+    eqClass = EquivalenceClasses(shape)
+    print(eqClass)
     if model.status == GRB.OPTIMAL:
         nodes_positions = dict()
         for node in range(graph.size()):

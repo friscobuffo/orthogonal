@@ -118,7 +118,52 @@ def _add_cycles_constraints(cycles, solver: Minisat22, is_edge_up_variable, is_e
         solver.add_clause(at_least_one_right)
         solver.add_clause(at_least_one_left)
 
-def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
+class Shape:
+    def __init__(self, graph: Graph):
+        self._original_graph = graph
+        self._shape = dict()
+    def __setitem__(self, key, direction):
+        self._shape[key] = direction
+    def __getitem__(self, key):
+        return self._shape[key]
+    def __contains__(self, key):
+        return key in self._shape
+    def is_up(self, i, j):
+        return self._shape[(i, j)] == "up"
+    def is_down(self, i, j):
+        return self._shape[(i, j)] == "down"
+    def is_right(self, i, j):
+        return self._shape[(i, j)] == "right"
+    def is_left(self, i, j):
+        return self._shape[(i, j)] == "left"
+    def is_horizontal(self, i, j):
+        return self.is_right(i, j) or self.is_left(i, j)
+    def is_vertical(self, i, j):
+        return self.is_up(i, j) or self.is_down(i, j)
+    def has_node_a_right_neighbor(self, node):
+        for neighbor in self._original_graph.get_neighbors(node):
+            if self.is_right(node, neighbor):
+                return neighbor
+        return None
+    def has_node_a_left_neighbor(self, node):
+        for neighbor in self._original_graph.get_neighbors(node):
+            if self.is_left(node, neighbor):
+                return neighbor
+        return None
+    def has_node_an_up_neighbor(self, node):
+        for neighbor in self._original_graph.get_neighbors(node):
+            if self.is_up(node, neighbor):
+                return neighbor
+        return None
+    def has_node_a_down_neighbor(self, node):
+        for neighbor in self._original_graph.get_neighbors(node):
+            if self.is_down(node, neighbor):
+                return neighbor
+        return None
+    def get_original_graph(self):
+        return self._original_graph
+
+def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable) -> Shape:
     variable_values = dict()
     for i in range(len(solution)):
         var = solution[i]
@@ -126,7 +171,7 @@ def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edg
             variable_values[var] = True
         else:
             variable_values[-var] = False
-    shape = dict()
+    shape = Shape(graph)
     for i in range(graph.size()):
         for j in graph.get_neighbors(i):
             up = _get_variables(is_edge_up_variable, i, j)
@@ -147,7 +192,7 @@ def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edg
 
 from time import perf_counter
 
-def build_shape(graph: Graph):
+def build_shape(graph: Graph) -> Shape:
     is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
     timer_start = perf_counter()
     cycles = graph.find_all_cycles()

@@ -7,8 +7,8 @@ from graph import Graph
 def make_orthogonal_draw(graph: Graph):
     print("building shape...")
     shape = build_shape(graph)
-    print("shape built")
     if shape:
+        print("shape built")
         print("building positions")
         nodes_positions = shape_to_nodes_positions(graph, shape)
         print("positions built")
