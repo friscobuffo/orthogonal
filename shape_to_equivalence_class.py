@@ -77,3 +77,41 @@ class EquivalenceClasses:
         s += f"Extremes of class x: {self.extremes_of_class_x}\nExtremes of class y: {self.extremes_of_class_y}\n"
         s += f"Class to nodes x: {self._class_to_nodes_x}\nClass to nodes y: {self._class_to_nodes_y}\n"
         return s
+    def get_original_shape(self):
+        return self._shape
+    def get_node_class_x(self, node):
+        return self._nodes_classes_x[node]
+    def get_node_class_y(self, node):
+        return self._nodes_classes_y[node]
+
+class PartialOrdering:
+    def __init__(self, equivalenceClasses: EquivalenceClasses):
+        shape : Shape = equivalenceClasses.get_original_shape()
+        graph : Graph = shape.get_original_graph()
+        self._partial_ordering = dict()
+        for node in range(graph.size()):
+            for neighbor in graph.get_neighbors(node):
+                if shape.is_horizontal(node, neighbor):
+                    node_class_x = equivalenceClasses.get_node_class_x(node)
+                    neighbor_class_x = equivalenceClasses.get_node_class_x(neighbor)
+                    if node_class_x == -1 or neighbor_class_x == -1: continue
+                    if shape.is_left(node, neighbor):
+                        self._partial_ordering[(node_class_x, neighbor_class_x)] = ">"
+                        self._partial_ordering[(neighbor_class_x, node_class_x)] = "<"
+                    elif shape.is_right(node, neighbor):
+                        self._partial_ordering[(node_class_x, neighbor_class_x)] = "<"
+                        self._partial_ordering[(neighbor_class_x, node_class_x)] = ">"
+                    else: assert False
+                elif shape.is_vertical(node, neighbor):
+                    node_class_y = equivalenceClasses.get_node_class_y(node)
+                    neighbor_class_y = equivalenceClasses.get_node_class_y(neighbor)
+                    if node_class_y == -1 or neighbor_class_y == -1: continue
+                    if shape.is_down(node, neighbor):
+                        self._partial_ordering[(node_class_y, neighbor_class_y)] = ">"
+                        self._partial_ordering[(neighbor_class_y, node_class_y)] = "<"
+                    elif shape.is_up(node, neighbor):
+                        self._partial_ordering[(node_class_y, neighbor_class_y)] = "<"
+                        self._partial_ordering[(neighbor_class_y, node_class_y)] = ">"
+                    else: assert False
+    def __str__(self):
+        return f"Partial ordering: {self._partial_ordering}"

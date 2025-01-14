@@ -155,7 +155,6 @@ def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_va
             model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
     
 from time import perf_counter
-from shape_to_equivalence_class import EquivalenceClasses
 
 def shape_to_nodes_positions(graph: Graph, shape: Shape):
     gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
@@ -171,8 +170,6 @@ def shape_to_nodes_positions(graph: Graph, shape: Shape):
     timer_start = perf_counter()
     model.optimize()
     print(f"Gurobi solving time: {perf_counter() - timer_start}")
-    eqClass = EquivalenceClasses(shape)
-    print(eqClass)
     if model.status == GRB.OPTIMAL:
         nodes_positions = dict()
         for node in range(graph.size()):

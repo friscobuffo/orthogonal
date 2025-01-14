@@ -4,11 +4,17 @@ from shape_to_positions import shape_to_nodes_positions
 from position_to_drawing import nodes_positions_to_drawing
 from graph import Graph
 
+from shape_to_equivalence_class import EquivalenceClasses, PartialOrdering
+
 def make_orthogonal_draw(graph: Graph):
     print("building shape...")
     shape = build_shape(graph)
     if shape:
         print("shape built")
+        equivalenceClasses = EquivalenceClasses(shape)
+        partialOrdering = PartialOrdering(equivalenceClasses)
+        print(equivalenceClasses)
+        print(partialOrdering)
         print("building positions")
         nodes_positions = shape_to_nodes_positions(graph, shape)
         print("positions built")
