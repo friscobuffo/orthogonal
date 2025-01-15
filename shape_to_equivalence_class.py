@@ -9,8 +9,6 @@ class EquivalenceClasses:
         self._nodes_classes_y = [-1 for _ in range(graph.size())]
         self._next_class = 0
         is_edge_visited = [[False for _ in range(graph.size())] for _ in range(graph.size())]
-        self.extremes_of_class_x = dict()
-        self.extremes_of_class_y = dict()
         for i in range(graph.size()):
             for j in graph.get_neighbors(i):
                 if is_edge_visited[i][j]: continue
@@ -26,7 +24,6 @@ class EquivalenceClasses:
                     else:
                         left, right = i, j
                     left, right = self._expand_edge_horizontally(left, right, is_edge_visited, new_class)
-                    self.extremes_of_class_x[new_class] = (left, right)
                 elif shape.is_vertical(i, j):
                     self._nodes_classes_x[i] = new_class
                     self._nodes_classes_x[j] = new_class
@@ -35,7 +32,6 @@ class EquivalenceClasses:
                     else:
                         down, up = i, j
                     down, up = self._expand_edge_vertically(down, up, is_edge_visited, new_class)
-                    self.extremes_of_class_y[new_class] = (down, up)
                 else: assert False
         self._class_to_nodes_x = dict()
         self._class_to_nodes_y = dict()
@@ -47,6 +43,18 @@ class EquivalenceClasses:
             if elem not in self._class_to_nodes_y:
                 self._class_to_nodes_y[elem] = []
             self._class_to_nodes_y[elem].append(i)
+        if -1 in self._class_to_nodes_x:
+            for node in self._class_to_nodes_x[-1]:
+                self._nodes_classes_x[node] = self._next_class
+                self._class_to_nodes_x[self._next_class] = [node]
+                self._next_class += 1
+            self._class_to_nodes_x.pop(-1)
+        if -1 in self._class_to_nodes_y:
+            for node in self._class_to_nodes_y[-1]:
+                self._nodes_classes_y[node] = self._next_class
+                self._class_to_nodes_y[self._next_class] = [node]
+                self._next_class += 1
+            self._class_to_nodes_y.pop(-1)
     def _edge_expanding_function(self, node, direction_function, is_edge_visited, new_class, belonging_class):
         while (True):
             neighbor = direction_function(node)
@@ -74,7 +82,6 @@ class EquivalenceClasses:
         return (down, up)
     def __str__(self):
         s = f"Nodes classes x: {self._nodes_classes_x}\nNodes classes y: {self._nodes_classes_y}\n"
-        s += f"Extremes of class x: {self.extremes_of_class_x}\nExtremes of class y: {self.extremes_of_class_y}\n"
         s += f"Class to nodes x: {self._class_to_nodes_x}\nClass to nodes y: {self._class_to_nodes_y}\n"
         return s
     def get_original_shape(self):
@@ -83,35 +90,11 @@ class EquivalenceClasses:
         return self._nodes_classes_x[node]
     def get_node_class_y(self, node):
         return self._nodes_classes_y[node]
-
-class PartialOrdering:
-    def __init__(self, equivalenceClasses: EquivalenceClasses):
-        shape : Shape = equivalenceClasses.get_original_shape()
-        graph : Graph = shape.get_original_graph()
-        self._partial_ordering = dict()
-        for node in range(graph.size()):
-            for neighbor in graph.get_neighbors(node):
-                if shape.is_horizontal(node, neighbor):
-                    node_class_x = equivalenceClasses.get_node_class_x(node)
-                    neighbor_class_x = equivalenceClasses.get_node_class_x(neighbor)
-                    if node_class_x == -1 or neighbor_class_x == -1: continue
-                    if shape.is_left(node, neighbor):
-                        self._partial_ordering[(node_class_x, neighbor_class_x)] = ">"
-                        self._partial_ordering[(neighbor_class_x, node_class_x)] = "<"
-                    elif shape.is_right(node, neighbor):
-                        self._partial_ordering[(node_class_x, neighbor_class_x)] = "<"
-                        self._partial_ordering[(neighbor_class_x, node_class_x)] = ">"
-                    else: assert False
-                elif shape.is_vertical(node, neighbor):
-                    node_class_y = equivalenceClasses.get_node_class_y(node)
-                    neighbor_class_y = equivalenceClasses.get_node_class_y(neighbor)
-                    if node_class_y == -1 or neighbor_class_y == -1: continue
-                    if shape.is_down(node, neighbor):
-                        self._partial_ordering[(node_class_y, neighbor_class_y)] = ">"
-                        self._partial_ordering[(neighbor_class_y, node_class_y)] = "<"
-                    elif shape.is_up(node, neighbor):
-                        self._partial_ordering[(node_class_y, neighbor_class_y)] = "<"
-                        self._partial_ordering[(neighbor_class_y, node_class_y)] = ">"
-                    else: assert False
-    def __str__(self):
-        return f"Partial ordering: {self._partial_ordering}"
+    def get_classes_list_x(self):
+        return self._class_to_nodes_x.keys()
+    def get_classes_list_y(self):
+        return self._class_to_nodes_y.keys()
+    def get_nodes_of_class_x(self, class_x):
+        return self._class_to_nodes_x.get(class_x, [])
+    def get_nodes_of_class_y(self, class_y):
+        return self._class_to_nodes_y.get(class_y, [])

@@ -156,7 +156,7 @@ def _constraints_for_no_nodes_overlapping(graph: Graph, model: Model, nodes_x_va
     
 from time import perf_counter
 
-def shape_to_nodes_positions(graph: Graph, shape: Shape):
+def shape_to_nodes_positions_gurobi(graph: Graph, shape: Shape):
     gp.setParam('OutputFlag', 0) # suppresses the prints of gurobi
     model = Model("my_model")
     nodes_x_variables, nodes_y_variables = _initialize_nodes_variables(model, graph)
@@ -165,11 +165,14 @@ def shape_to_nodes_positions(graph: Graph, shape: Shape):
     _constraints_from_edges_directions(graph, model, nodes_x_variables, nodes_y_variables, shape)
     _constraints_for_no_nodes_overlapping(graph, model, nodes_x_variables, nodes_y_variables, shape)
     _constraints_nodes_inside_edges(graph, model, nodes_x_variables, nodes_y_variables, shape)
-    print(f"Gurobi constraints generation time: {perf_counter() - timer_start}")
+    constraints_generation_time = perf_counter() - timer_start
+    print(f"Gurobi constraints generation time: {constraints_generation_time}")
     model.setObjective(sum(nodes_x_variables) + sum(nodes_y_variables), GRB.MINIMIZE)
     timer_start = perf_counter()
     model.optimize()
-    print(f"Gurobi solving time: {perf_counter() - timer_start}")
+    solving_time = perf_counter() - timer_start
+    print(f"Gurobi solving time: {solving_time}")
+    print(f"Gurobi total time: {constraints_generation_time + solving_time}")
     if model.status == GRB.OPTIMAL:
         nodes_positions = dict()
         for node in range(graph.size()):

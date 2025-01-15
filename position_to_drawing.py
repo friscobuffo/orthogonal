@@ -17,7 +17,7 @@ from graph import Graph
 
 import plotly.graph_objects as go
 
-def nodes_positions_to_drawing(graph: Graph, nodes_positions: dict):
+def nodes_positions_to_drawing(graph: Graph, nodes_positions: dict, title = "Orthogonal Drawing"):
     fig = go.Figure()
     # draw edges
     for node in range(graph.size()):
@@ -46,7 +46,7 @@ def nodes_positions_to_drawing(graph: Graph, nodes_positions: dict):
             name=f'Node {node}'
         ))
     fig.update_layout(
-        title='Orthogonal Drawing',
+        title=title,
         xaxis=dict(title='X-axis', showgrid=False, zeroline=False),
         yaxis=dict(title='Y-axis', showgrid=False, zeroline=False),
         showlegend=False,

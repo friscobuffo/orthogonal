@@ -201,10 +201,13 @@ def build_shape(graph: Graph) -> Shape:
         _add_constraints_opposite_edges(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_nodes_constraints(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_cycles_constraints(cycles, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
-        print(f"SAT constraints generation time: {perf_counter() - timer_start}")
+        sat_contraints_time = perf_counter() - timer_start
+        print(f"SAT constraints generation time: {sat_contraints_time}")
         timer_start = perf_counter()
         solved = solver.solve()
-        print(f"SAT solving time: {perf_counter() - timer_start}")
+        sat_solve_time = perf_counter() - timer_start
+        print(f"SAT solving time: {sat_solve_time}")
+        print(f"SAT total time: {sat_contraints_time + sat_solve_time}")
         if solved:
             return _model_solution_to_shape(graph, solver.get_model(), is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         else:
