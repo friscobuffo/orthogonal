@@ -9,14 +9,14 @@ def ordering_to_positions(ordering: TotalOrdering) -> dict:
     for class_x in ordering.get_ordering_x():
         for node in equivalence_classes.get_nodes_of_class_x(class_x):
             if node not in nodes_positions:
-                nodes_positions[node] = (-1, -1)
-            nodes_positions[node] = (current_position, -1)
+                nodes_positions[node] = (0, 0)
+            nodes_positions[node] = (current_position, 0)
         current_position += 1
     current_position = 0
     for class_y in ordering.get_ordering_y():
         for node in equivalence_classes.get_nodes_of_class_y(class_y):
             if node not in nodes_positions:
-                nodes_positions[node] = (-1, -1)
+                nodes_positions[node] = (0, 0)
             nodes_positions[node] = (nodes_positions[node][0], current_position)
         current_position += 1
     return nodes_positions

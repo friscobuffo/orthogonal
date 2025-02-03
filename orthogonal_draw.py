@@ -6,22 +6,28 @@ from graph import Graph
 
 from ordering_to_positions import shape_to_positions_ordering
 
-def make_orthogonal_draw(graph: Graph):
+from time import sleep
+
+def make_orthogonal_draw(graph: Graph, draw_to_screen: bool):
     print("building shape...")
     shape = build_shape(graph)
     if shape:
         print("shape built")
-        print("building positions with gurobi")
-        nodes_positions_gurobi = shape_to_nodes_positions_gurobi(graph, shape)
+
+        # print("building positions with gurobi")
+        # nodes_positions_gurobi = shape_to_nodes_positions_gurobi(graph, shape)
+        # if draw_to_screen:
+        #     nodes_positions_to_drawing(graph, nodes_positions_gurobi, "Orthogonal Drawing with Gurobi")
+
         print("building positions with equivalence classes")
         nodes_positions_eq_classes = shape_to_positions_ordering(shape)
-        print("positions built")
-        nodes_positions_to_drawing(graph, nodes_positions_gurobi, "Orthogonal Drawing with Gurobi")
-        nodes_positions_to_drawing(graph, nodes_positions_eq_classes, "Orthogonal Drawing with Equivalence Classes")
+        if draw_to_screen:
+            nodes_positions_to_drawing(graph, nodes_positions_eq_classes, "Orthogonal Drawing with Equivalence Classes")
+
         print("finished...\n\n\n\n")
 
 if __name__ == "__main__":
     for i in all_example_graphs_indexes():
         graph = get_example_graph(i)
-        make_orthogonal_draw(graph)
-        input("press enter key to continue...")
+        make_orthogonal_draw(graph, True)
+        sleep(.5)

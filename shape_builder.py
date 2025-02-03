@@ -196,6 +196,11 @@ def build_shape(graph: Graph) -> Shape:
     is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
     timer_start = perf_counter()
     cycles = graph.find_all_cycles()
+    print("number of cycles:", len(cycles))
+    cycles = graph.compute_cycle_basis_tree()
+    print("number of cycles in basis:", len(graph.compute_cycle_basis()))
+    # cycles = graph.compute_2_cycles_covering()
+    # print("number of cycles in SMART 2-cycles covering:", len(cycles))
     with Minisat22(with_proof=True) as solver:
         _add_constraints_one_direction_per_edge(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_constraints_opposite_edges(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)

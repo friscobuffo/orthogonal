@@ -169,6 +169,42 @@ def graph8():
     graph.add_edge(5, 6)
     graph.add_edge(32, 26)
 
+    
+    graph.add_edge(20, 34)
+
+    return graph
+
+def graph9():
+    graph = Graph(10)
+    graph.add_edge(0, 1)
+    graph.add_edge(1, 2)
+    graph.add_edge(2, 3)
+    graph.add_edge(3, 4)
+    graph.add_edge(4, 5)
+    graph.add_edge(5, 6)
+    graph.add_edge(6, 7)
+    graph.add_edge(7, 8)
+    graph.add_edge(8, 9)
+    return graph
+
+def graph10():
+    graph = Graph(12)
+    graph.add_edge(0, 1)
+    graph.add_edge(0, 2)
+    graph.add_edge(1, 3)
+    graph.add_edge(2, 3)
+    graph.add_edge(2, 4)
+    graph.add_edge(3, 5)
+    graph.add_edge(4, 5)
+    graph.add_edge(1, 6)
+    graph.add_edge(6, 11)
+    graph.add_edge(11, 7)
+    graph.add_edge(3, 7)
+    
+    graph.add_edge(0, 8)
+    graph.add_edge(8, 9)
+    graph.add_edge(10, 9)
+    graph.add_edge(10, 2)
     return graph
 
 def get_example_graph(n):
@@ -188,7 +224,11 @@ def get_example_graph(n):
         return graph7()
     if n == 8:
         return graph8()
+    if n == 9:
+        return graph9()
+    if n == 10:
+        return graph10()
     return None
 
 def all_example_graphs_indexes():
-    return range(1,9)
+    return range(7, 11)
