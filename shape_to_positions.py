@@ -68,6 +68,7 @@ def _constraints_nodes_inside_horizontal_edge(graph: Graph, model: Model, left, 
         model.addConstr(aux1 + aux2 + aux3 + aux4 >= 1)
 
 def _expand_edge(graph: Graph, smaller_node, bigger_node, bigger_direction_function, smaller_direction_function, shape, is_edge_already_computed, can_node_be_skipped):
+    visited_nodes = {smaller_node, bigger_node}
     while (True): # get the most right/up node
         bigger_node_neighbor = bigger_direction_function(graph, bigger_node, shape)
         if bigger_node_neighbor is None: break
@@ -76,7 +77,9 @@ def _expand_edge(graph: Graph, smaller_node, bigger_node, bigger_direction_funct
             can_node_be_skipped[n] = True
         is_edge_already_computed[bigger_node][bigger_node_neighbor] = True
         is_edge_already_computed[bigger_node_neighbor][bigger_node] = True
-        bigger_node = bigger_node_neighbor
+        visited_nodes.add(bigger_node_neighbor)
+        if bigger_node in visited_nodes: raise Exception("Edge expanding function loops")
+        visited_nodes.add(bigger_node)
     while (True): # get the most left/down node
         smaller_node_neighbor = smaller_direction_function(graph, smaller_node, shape)
         if smaller_node_neighbor is None: break
@@ -86,6 +89,7 @@ def _expand_edge(graph: Graph, smaller_node, bigger_node, bigger_direction_funct
         is_edge_already_computed[smaller_node][smaller_node_neighbor] = True
         is_edge_already_computed[smaller_node_neighbor][smaller_node] = True
         smaller_node = smaller_node_neighbor
+        if smaller_node in visited_nodes: raise Exception("Edge expanding function loops")
     return smaller_node, bigger_node
 
 def _constraints_nodes_inside_edges(graph: Graph, model: Model, nodes_x_variables, nodes_y_variables, shape: Shape):

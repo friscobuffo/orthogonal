@@ -108,7 +108,7 @@ def _add_nodes_constraints(graph: Graph, solver: Minisat22, is_edge_up_variable,
 
 def _add_cycles_constraints(cycles, solver: Minisat22, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
     for cycle in cycles:
-        assert len(cycle) > 3
+        # assert len(cycle) > 3
         at_least_one_down = [is_edge_down_variable[cycle[i]][cycle[(i + 1) % len(cycle)]] for i in range(len(cycle))]
         at_least_one_up = [is_edge_up_variable[cycle[i]][cycle[(i + 1) % len(cycle)]] for i in range(len(cycle))]
         at_least_one_right = [is_edge_right_variable[cycle[i]][cycle[(i + 1) % len(cycle)]] for i in range(len(cycle))]
@@ -162,6 +162,8 @@ class Shape:
         return None
     def get_original_graph(self):
         return self._original_graph
+    def __str__(self):
+        return str(self._shape)
 
 def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable) -> Shape:
     variable_values = dict()
@@ -192,15 +194,9 @@ def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edg
 
 from time import perf_counter
 
-def build_shape(graph: Graph) -> Shape:
-    is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
+def build_shape(graph: Graph, cycles: list) -> Shape:
     timer_start = perf_counter()
-    cycles = graph.find_all_cycles()
-    print("number of cycles:", len(cycles))
-    cycles = graph.compute_cycle_basis_tree()
-    print("number of cycles in basis:", len(graph.compute_cycle_basis()))
-    # cycles = graph.compute_2_cycles_covering()
-    # print("number of cycles in SMART 2-cycles covering:", len(cycles))
+    is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
     with Minisat22(with_proof=True) as solver:
         _add_constraints_one_direction_per_edge(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_constraints_opposite_edges(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)

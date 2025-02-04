@@ -25,7 +25,7 @@ class Graph:
         return len(self.adjacency_list)
     
     def __str__(self):
-        return "\n".join([f"{i}: {neighbors}" for i, neighbors in enumerate(self.adjacency_list)])
+        return "\n".join([f"{node}: {self.adjacency_list[node]}" for node in range(self.size())])
     
     def find_all_cycles(self):
         def find_all_cycles_with_node(self: Graph, node, visited, path, cycles, visitedGlobal):

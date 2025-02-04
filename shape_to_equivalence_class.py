@@ -56,6 +56,8 @@ class EquivalenceClasses:
                 self._next_class += 1
             self._class_to_nodes_y.pop(-1)
     def _edge_expanding_function(self, node, direction_function, is_edge_visited, new_class, belonging_class):
+        starting_node = node
+        visited_nodes = {node}
         while (True):
             neighbor = direction_function(node)
             if neighbor is None: break
@@ -63,6 +65,10 @@ class EquivalenceClasses:
             is_edge_visited[node][neighbor] = True
             is_edge_visited[neighbor][node] = True
             node = neighbor
+            if node in visited_nodes:
+                error = f"Edge expanding function loops while expanding node: {starting_node}\ndirection of expansion name: {direction_function.__name__}"
+                raise Exception(error)
+            visited_nodes.add(node)
         return node
     def _keep_expanding_right(self, node, is_edge_visited, new_class):
         return self._edge_expanding_function(node, self._shape.has_node_a_right_neighbor, is_edge_visited, new_class, self._nodes_classes_y)

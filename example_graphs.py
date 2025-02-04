@@ -169,7 +169,7 @@ def graph8():
     graph.add_edge(5, 6)
     graph.add_edge(32, 26)
 
-    
+
     graph.add_edge(20, 34)
 
     return graph
@@ -207,6 +207,57 @@ def graph10():
     graph.add_edge(10, 2)
     return graph
 
+def graph11():
+    graph = Graph(36)
+    graph.add_edge(12, 11) 
+    graph.add_edge(10, 11)
+    graph.add_edge(9, 10)
+    graph.add_edge(8, 9)
+    graph.add_edge(32, 33)
+    graph.add_edge(13, 22) 
+    graph.add_edge(23, 24)
+    graph.add_edge(35, 21)
+    graph.add_edge(0, 30) 
+    graph.add_edge(30, 14)
+    graph.add_edge(21, 25)
+    graph.add_edge(25, 7)
+    graph.add_edge(15, 27)
+    graph.add_edge(1, 16)
+    graph.add_edge(16, 29)
+    graph.add_edge(28, 31)
+    graph.add_edge(31, 6)
+    graph.add_edge(17, 18)
+    graph.add_edge(2, 3)
+    graph.add_edge(3, 4)
+    graph.add_edge(4, 5)
+    graph.add_edge(26, 34)
+
+    graph.add_edge(34, 33)
+    graph.add_edge(32, 10)
+    graph.add_edge(12, 0) 
+    graph.add_edge(0, 1)
+    graph.add_edge(1, 2)
+    graph.add_edge(13, 30) 
+    graph.add_edge(16, 17)
+    graph.add_edge(14, 15)
+    graph.add_edge(15, 29)
+    graph.add_edge(11, 22) 
+    graph.add_edge(22, 35)
+    graph.add_edge(18, 3)
+    graph.add_edge(9, 23)
+    graph.add_edge(19, 4)
+    graph.add_edge(21, 27)
+    graph.add_edge(27, 28)
+    graph.add_edge(24, 25)
+    graph.add_edge(7, 8)
+    graph.add_edge(7, 6)
+    graph.add_edge(5, 6)
+    graph.add_edge(32, 26)
+
+    graph.add_edge(20, 34)
+
+    return graph
+
 def get_example_graph(n):
     if n == 1:
         return graph1()
@@ -228,7 +279,49 @@ def get_example_graph(n):
         return graph9()
     if n == 10:
         return graph10()
+    if n == 11:
+        return graph11()
     return None
 
 def all_example_graphs_indexes():
-    return range(7, 11)
+    return range(11, 12)
+
+def generate_random_graph_tree(number_of_nodes: int):
+    import random
+    graph = Graph(number_of_nodes)
+    nodes = list(range(number_of_nodes))
+    random.shuffle(nodes)
+    tree = [nodes[0]]
+    for i in range(1, number_of_nodes):
+        node = nodes[i]
+        random.shuffle(tree)
+        while (len(graph.get_neighbors(tree[0])) >= 4):
+            random.shuffle(tree)
+        parent = tree[0]
+        graph.add_edge(node, parent)
+        tree.append(node)
+    return graph
+
+# makes a random graph with n nodes
+# the graph is connected, fist a random tree is created and then the remaining edges are added
+# each node cannot have more than 4 neighbors
+def generate_random_graph(number_of_nodes: int, number_of_edges: int):
+    import random
+    graph = Graph(number_of_nodes)
+    nodes = list(range(number_of_nodes))
+    random.shuffle(nodes)
+    tree = [nodes[0]]
+    for i in range(1, number_of_nodes):
+        node = nodes[i]
+        random.shuffle(tree)
+        while (len(graph.get_neighbors(tree[0])) >= 4):
+            random.shuffle(tree)
+        parent = tree[0]
+        graph.add_edge(node, parent)
+        tree.append(node)
+    for _ in range(number_of_edges - number_of_nodes + 1):
+        node1 = random.choice(nodes)
+        node2 = random.choice(nodes)
+        if node1 != node2 and len(graph.get_neighbors(node1)) < 4 and len(graph.get_neighbors(node2)) < 4:
+            graph.add_edge(node1, node2)
+    return graph
