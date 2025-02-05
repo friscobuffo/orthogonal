@@ -1,3 +1,53 @@
+# def is_edge_in_cycle(cycle, node1, node2):
+#     if node1 not in cycle or node2 not in cycle:
+#         return False
+#     index1 = cycle.index(node1)
+#     index2 = cycle.index(node2)
+#     return (index1 + 1) % len(cycle) == index2 or (index2 + 1) % len(cycle) == index1
+
+# def find_common_path_in_cycles(cycle1, cycle2):
+#     position = None
+#     for i in range(len(cycle1)):
+#         if cycle1[i] not in cycle2:
+#             position = i
+#     if position is None:
+#         return find_common_path_in_cycles(cycle2, cycle1)
+#     while cycle1[position] not in cycle2:
+#         position = (position + 1) % len(cycle1)
+#     path = []
+#     while cycle1[position] in cycle2:
+#         path.append(cycle1[position])
+#         position = (position + 1) % len(cycle1)
+#     return path
+
+# def add_cycles(cycle1: list, cycle2: list):
+#     path_in_common = find_common_path_in_cycles(cycle1, cycle2)
+#     print("found common path:", path_in_common)
+#     if len(path_in_common) == 0: raise Exception("No common edge")
+#     if len(path_in_common) == 1: raise Exception("Only common node")
+#     position = cycle1.index(path_in_common[0])
+#     if cycle1[(position+1) % len(cycle1)] == path_in_common[1]:
+#         cycle1.reverse()
+#         position = cycle1.index(path_in_common[0])
+#     result = []
+#     while True:
+#         result.append(cycle1[position])
+#         if cycle1[position] == path_in_common[-1]:
+#             break
+#         position = (position+1) % len(cycle1)
+#     path_in_common.reverse()
+#     position = cycle2.index(path_in_common[0])
+#     if cycle2[(position+1) % len(cycle2)] == path_in_common[1]:
+#         cycle2.reverse()
+#         position = cycle2.index(path_in_common[0])
+#     position = (position+1)%len(cycle2)
+#     while True:
+#         if cycle2[position] == path_in_common[-1]:
+#             break
+#         result.append(cycle2[position])
+#         position = (position+1) % len(cycle2)
+#     return result
+
 class Graph:
     def __init__(self, numberOfNodes: int):
         self.adjacency_list: dict = dict()
@@ -26,25 +76,23 @@ class Graph:
     
     def __str__(self):
         return "\n".join([f"{node}: {self.adjacency_list[node]}" for node in range(self.size())])
-    
+
     def find_all_cycles(self):
-        def find_all_cycles_with_node(self: Graph, node, visited, path, cycles, visitedGlobal):
-            visited[node] = True
+        def find_all_cycles_with_node(node, path: list):
             path.append(node)
             for neighbor in self.get_neighbors(node):
-                if visitedGlobal[neighbor]: continue
+                if visited_global[neighbor]: continue
                 if len(path) > 1 and neighbor == path[-2]: continue
                 if neighbor in path:
                     if neighbor == path[0]:
                         cycles.append(path[path.index(neighbor):])
                 else:
-                    find_all_cycles_with_node(self, neighbor, visited, path.copy(), cycles, visitedGlobal)
-        visitedGlobal = [False] * self.size()
+                    find_all_cycles_with_node(neighbor, path.copy())
+        visited_global = [False] * self.size()
         cycles = []
         for node in range(self.size()):
-            visited = [False] * self.size()
-            find_all_cycles_with_node(self, node, visited, [], cycles, visitedGlobal)
-            visitedGlobal[node] = True
+            find_all_cycles_with_node(node, [])
+            visited_global[node] = True
         return cycles
     
     def __len__(self):
@@ -61,62 +109,9 @@ class Graph:
     def add_node(self):
         self.adjacency_list[self.size()] = []
         self.nodes_color.append("green")
-
-    # given an undirected graph (in which each edge is represented twice, in both directions), it computes a cycle basis
-    # (i.e., a set of cycles such that each cycle of the graph can be expressed as a linear combination of the cycles in the basis)
-    def compute_cycle_basis(self):
-        def dfs_cycle_basis(node, parent, visited, stack, cycles):
-            visited[node] = True
-            stack.append(node)
-            for neighbor in self.get_neighbors(node):
-                if neighbor == parent:
-                    continue
-                if not visited[neighbor]:
-                    dfs_cycle_basis(neighbor, node, visited, stack, cycles)
-                elif neighbor in stack:
-                    cycle = stack[stack.index(neighbor):]
-                    cycles.append(cycle)
-            stack.pop()
-
-        visited = [False] * self.size()
-        cycles = []
-        for node in range(self.size()):
-            if not visited[node]:
-                dfs_cycle_basis(node, -1, visited, [], cycles)
-        return cycles
     
-    def compute_2_cycles_covering(self):
-        all_cycles = self.find_all_cycles()
-        all_cycles.sort(key=lambda cycle: len(cycle)) # SEEMS TO BE MANDATORY
-        cycles_covering = []
-        edges_cycles_count = dict()
-        edges_left = set()
-        for node in range(self.size()):
-            for neighbor in self.get_neighbors(node):
-                if node < neighbor:
-                    edges_cycles_count[(node, neighbor)] = 0
-                    edges_left.add((node, neighbor))
-        for cycle in all_cycles:
-            is_cycle_useful = False
-            for i in range(len(cycle)):
-                node1 = cycle[i]
-                node2 = cycle[(i + 1) % len(cycle)]
-                if node1 > node2:
-                    node1, node2 = node2, node1
-                edges_cycles_count[(node1, node2)] += 1
-                if (node1, node2) in edges_left:
-                    is_cycle_useful = True
-                if edges_cycles_count[(node1, node2)] == 2:
-                    edges_left.discard((node1, node2))
-            if is_cycle_useful:
-                cycles_covering.append(cycle)
-            if not edges_left:
-                break
-        return cycles_covering
-    
-    def compute_cycle_basis_tree(self, tree_root = 0):
+    def compute_cycle_basis(self, tree_root = 0):
         spanning = SpanningTree(self, tree_root)
-        print(spanning)
         cycles = []
         for node in range(self.size()):
             for neighbor in self.get_neighbors(node):
@@ -135,7 +130,15 @@ class Graph:
                     path1.extend(path2)
                     path1.pop()
                     cycles.append(path1)
-        return cycles                    
+        return cycles
+    
+    # def compute_cycle_basis_plus(self, tree_root = 0):
+    #     basis = self.compute_cycle_basis(tree_root)
+    #     extra_cycle = add_cycles(basis[0], basis[1])
+    #     for i in range(2, len(basis)):
+    #         extra_cycle = add_cycles(extra_cycle, basis[i])
+    #     basis.append(extra_cycle)
+    #     return basis
 
 from queue import Queue
 

@@ -1,4 +1,4 @@
-from pysat.solvers import Glucose42 as Minisat22
+from pysat.solvers import Glucose42
 from graph import Graph
 
 def _initialize_variables(graph: Graph):
@@ -29,7 +29,7 @@ def _get_variables(variables, i, j):
     return variables[i][j]
 
 # each edge can only be in one direction
-def _add_constraints_one_direction_per_edge(graph: Graph, solver: Minisat22, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
+def _add_constraints_one_direction_per_edge(graph: Graph, solver: Glucose42, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
     for i in range(graph.size()):
         for j in graph.get_neighbors(i):
             up = _get_variables(is_edge_up_variable, i, j)
@@ -48,7 +48,7 @@ def _add_constraints_one_direction_per_edge(graph: Graph, solver: Minisat22, is_
             solver.add_clause([-left, -right])
 
 # if edge i,j is up, edge j,i is down (etc)
-def _add_constraints_opposite_edges(graph: Graph, solver: Minisat22, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
+def _add_constraints_opposite_edges(graph: Graph, solver: Glucose42, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
     for i in range(graph.size()):
         for j in graph.get_neighbors(i):
             if (i > j):
@@ -74,7 +74,7 @@ def _add_constraints_opposite_edges(graph: Graph, solver: Minisat22, is_edge_up_
             solver.add_clause([-left, opposite_right])
             solver.add_clause([-opposite_right, left])
 
-def _one_edge_per_direction_clauses(graph: Graph, solver: Minisat22, is_edge_direction, node):
+def _one_edge_per_direction_clauses(graph: Graph, solver: Glucose42, is_edge_direction, node):
     if len(graph.get_neighbors(node)) == 4:
         direction0 = _get_variables(is_edge_direction, node, graph.get_neighbors(node)[0])
         direction1 = _get_variables(is_edge_direction, node, graph.get_neighbors(node)[1])
@@ -95,7 +95,7 @@ def _one_edge_per_direction_clauses(graph: Graph, solver: Minisat22, is_edge_dir
         # at most one is true (at least 1 is false)
         solver.add_clause([-direction0, -direction1])
 
-def _add_nodes_constraints(graph: Graph, solver: Minisat22, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
+def _add_nodes_constraints(graph: Graph, solver: Glucose42, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
     for node in range(graph.size()):
         # at most one up edge
         _one_edge_per_direction_clauses(graph, solver, is_edge_up_variable, node)
@@ -106,7 +106,7 @@ def _add_nodes_constraints(graph: Graph, solver: Minisat22, is_edge_up_variable,
         # at most one left edge
         _one_edge_per_direction_clauses(graph, solver, is_edge_left_variable, node)
 
-def _add_cycles_constraints(cycles, solver: Minisat22, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
+def _add_cycles_constraints(cycles, solver: Glucose42, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable):
     for cycle in cycles:
         # assert len(cycle) > 3
         at_least_one_down = [is_edge_down_variable[cycle[i]][cycle[(i + 1) % len(cycle)]] for i in range(len(cycle))]
@@ -197,7 +197,7 @@ from time import perf_counter
 def build_shape(graph: Graph, cycles: list) -> Shape:
     timer_start = perf_counter()
     is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
-    with Minisat22(with_proof=True) as solver:
+    with Glucose42(with_proof=True) as solver:
         _add_constraints_one_direction_per_edge(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_constraints_opposite_edges(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         _add_nodes_constraints(graph, solver, is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
@@ -214,21 +214,41 @@ def build_shape(graph: Graph, cycles: list) -> Shape:
         else:
             print("NOT SOLVED")
             proof = solver.get_proof()
-            print(proof)
-            for elem in proof:
-                clauses = elem.split(sep=" ")
-                if len(clauses) != 2: continue
-                var = abs(int(clauses[0]))
-                edge = variable_to_edge[var]
-                graph.remove_edge(edge[0], edge[1])
-                new_node = graph.size()
-                graph.add_node()
-                graph.add_edge(edge[0], new_node)
-                graph.add_edge(edge[1], new_node)
-                print("TRYING AGAIN")
-                return build_shape(graph)
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("DID NOT FOUND A GOOD CLAUSE")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # print(proof)
+            for i in range(len(proof) - 1, -1, -1):
+                proof_elem = proof[i].split(sep=" ")
+                clauses = set()
+                for elem in proof_elem:
+                    if elem == "0" or elem == "d":
+                        continue
+                    clauses.add(abs(int(elem)))
+                if len(clauses) == 1:
+                    for var in clauses:
+                        edge = variable_to_edge[var]
+                        graph.remove_edge(edge[0], edge[1])
+                        new_node = graph.size()
+                        graph.add_node()
+                        graph.add_edge(edge[0], new_node)
+                        graph.add_edge(edge[1], new_node)
+                        for cycle in cycles:
+                            for j in range(len(cycle)):
+                                if cycle[j] == edge[0] and cycle[(j + 1) % len(cycle)] == edge[1]:
+                                    cycle.insert(j + 1, new_node)
+                                    break
+                                if cycle[j] == edge[1] and cycle[(j + 1) % len(cycle)] == edge[0]:
+                                    cycle.insert(j + 1, new_node)
+                                    break
+                        print("used clause:", proof_elem)
+                        print("clause:", clauses)
+                        print("removed edge: ", edge)
+                        print("added node: ", new_node)
+                        print("TRYING AGAIN")
+                        return build_shape(graph, cycles)
+            exception = (
+                f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+                f"DID NOT FOUND A GOOD CLAUSE\n"
+                f"proof:\n"
+                f"{proof}\n"
+                f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+            )
+            raise Exception(exception)

@@ -258,6 +258,27 @@ def graph11():
 
     return graph
 
+def graph12():
+    graph = Graph(12)
+    graph.add_edge(0, 1)
+    graph.add_edge(0, 6)
+    graph.add_edge(2, 1)
+    graph.add_edge(2, 3)
+    graph.add_edge(5, 1)
+    graph.add_edge(5, 6)
+    graph.add_edge(4, 3)
+    graph.add_edge(7, 8)
+    graph.add_edge(9, 6)
+    graph.add_edge(9, 7)
+
+    graph.add_edge(5, 10)
+    graph.add_edge(10, 4)
+
+    graph.add_edge(4, 11)
+    graph.add_edge(8, 11)
+     
+    return graph
+
 def get_example_graph(n):
     if n == 1:
         return graph1()
@@ -281,10 +302,12 @@ def get_example_graph(n):
         return graph10()
     if n == 11:
         return graph11()
+    if n == 12:
+        return graph12()
     return None
 
 def all_example_graphs_indexes():
-    return range(11, 12)
+    return range(1, 13)
 
 def generate_random_graph_tree(number_of_nodes: int):
     import random
@@ -319,9 +342,13 @@ def generate_random_graph(number_of_nodes: int, number_of_edges: int):
         parent = tree[0]
         graph.add_edge(node, parent)
         tree.append(node)
-    for _ in range(number_of_edges - number_of_nodes + 1):
+    edges_left_to_add = number_of_edges - number_of_nodes + 1
+    while edges_left_to_add > 0:
         node1 = random.choice(nodes)
         node2 = random.choice(nodes)
+        while (node2 in graph.get_neighbors(node1)):
+            node2 = random.choice(nodes)
         if node1 != node2 and len(graph.get_neighbors(node1)) < 4 and len(graph.get_neighbors(node2)) < 4:
             graph.add_edge(node1, node2)
+            edges_left_to_add -= 1
     return graph
