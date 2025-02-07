@@ -132,13 +132,41 @@ class Graph:
                     cycles.append(path1)
         return cycles
     
-    # def compute_cycle_basis_plus(self, tree_root = 0):
-    #     basis = self.compute_cycle_basis(tree_root)
-    #     extra_cycle = add_cycles(basis[0], basis[1])
-    #     for i in range(2, len(basis)):
-    #         extra_cycle = add_cycles(extra_cycle, basis[i])
-    #     basis.append(extra_cycle)
-    #     return basis
+    def _cycles_sum(self, cycles):
+        keep_edge = dict()
+        for cycle in cycles:
+            for i in range(len(cycle)):
+                edge = (cycle[i], cycle[(i+1)%len(cycle)])
+                reversed_edge = (cycle[(i+1)%len(cycle)], cycle[i])
+                if edge not in keep_edge:
+                    keep_edge[edge] = True
+                    keep_edge[reversed_edge] = True
+                    starting_node = edge[0]
+                else:
+                    keep_edge[edge] = not keep_edge[edge]
+                    keep_edge[reversed_edge] = not keep_edge[reversed_edge]
+                    if keep_edge[edge]:
+                        starting_node = edge[0]
+        result = []
+        def dfs(node, path: list):
+            path.append(node)
+            for neighbor in self.get_neighbors(node):
+                if not keep_edge.get((node, neighbor), False): continue
+                keep_edge[(node, neighbor)] = False
+                keep_edge[(neighbor, node)] = False
+                dfs(neighbor, path)
+        dfs(starting_node, result)
+        result.pop()
+        return result
+
+    def compute_cycle_basis_plus(self, tree_root = 0):
+        basis = self.compute_cycle_basis(tree_root)
+        extra_cycle = self._cycles_sum(basis)
+        extra_cycles = []
+        # for i in range(len(basis)-1):
+        #     for j in range(i+1, len(basis)):
+        #         extra_cycles.append(self._cycles_sum([basis[i], basis[j]]))
+        return basis + [extra_cycle] + extra_cycles
 
 from queue import Queue
 

@@ -11,7 +11,7 @@ import sys
 
 def make_orthogonal_draw(graph: Graph, draw_to_screen: bool):
     print("building shape...")
-    cycles = graph.find_all_cycles()
+    cycles = graph.compute_cycle_basis_plus()
     print("number of used cycles:", len(cycles))
     shape = build_shape(graph, cycles)
     if shape:
