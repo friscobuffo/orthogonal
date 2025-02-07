@@ -132,6 +132,9 @@ class Graph:
                     cycles.append(path1)
         return cycles
     
+    def get_edges(self):
+        return self.edges
+    
     def _cycles_sum(self, cycles):
         keep_edge = dict()
         for cycle in cycles:
@@ -162,11 +165,7 @@ class Graph:
     def compute_cycle_basis_plus(self, tree_root = 0):
         basis = self.compute_cycle_basis(tree_root)
         extra_cycle = self._cycles_sum(basis)
-        extra_cycles = []
-        # for i in range(len(basis)-1):
-        #     for j in range(i+1, len(basis)):
-        #         extra_cycles.append(self._cycles_sum([basis[i], basis[j]]))
-        return basis + [extra_cycle] + extra_cycles
+        return basis + [extra_cycle]
 
 from queue import Queue
 

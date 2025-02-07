@@ -328,13 +328,27 @@ def generate_random_graph_tree(number_of_nodes: int):
 # makes a random graph with n nodes
 # the graph is connected, fist a random tree is created and then the remaining edges are added
 # each node cannot have more than 4 neighbors
-def generate_random_graph(number_of_nodes: int, number_of_edges: int):
+def generate_good_random_graph(min_number_of_nodes: int, min_number_of_edges: int):
+    def remove_3_cycles(graph: Graph):
+        edges_to_split = []
+        for (n1,n2) in graph.get_edges():
+            if n1 > n2: continue
+            neighbors1 = set(graph.get_neighbors(n1))
+            neighbors2 = set(graph.get_neighbors(n2))
+            if len(neighbors1.intersection(neighbors2)) > 0:
+                edges_to_split.append((n1,n2))
+        for (n1,n2) in edges_to_split:
+            graph.remove_edge(n1, n2)
+            new_node = graph.size()
+            graph.add_node()
+            graph.add_edge(n1, new_node)
+            graph.add_edge(n2, new_node)
     import random
-    graph = Graph(number_of_nodes)
-    nodes = list(range(number_of_nodes))
+    graph = Graph(min_number_of_nodes)
+    nodes = list(range(min_number_of_nodes))
     random.shuffle(nodes)
     tree = [nodes[0]]
-    for i in range(1, number_of_nodes):
+    for i in range(1, min_number_of_nodes):
         node = nodes[i]
         random.shuffle(tree)
         while (len(graph.get_neighbors(tree[0])) >= 4):
@@ -342,7 +356,7 @@ def generate_random_graph(number_of_nodes: int, number_of_edges: int):
         parent = tree[0]
         graph.add_edge(node, parent)
         tree.append(node)
-    edges_left_to_add = number_of_edges - number_of_nodes + 1
+    edges_left_to_add = min_number_of_edges - min_number_of_nodes + 1
     while edges_left_to_add > 0:
         node1 = random.choice(nodes)
         node2 = random.choice(nodes)
@@ -351,4 +365,5 @@ def generate_random_graph(number_of_nodes: int, number_of_edges: int):
         if node1 != node2 and len(graph.get_neighbors(node1)) < 4 and len(graph.get_neighbors(node2)) < 4:
             graph.add_edge(node1, node2)
             edges_left_to_add -= 1
+    remove_3_cycles(graph)
     return graph

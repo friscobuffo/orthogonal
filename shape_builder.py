@@ -194,7 +194,7 @@ def _model_solution_to_shape(graph: Graph, solution, is_edge_up_variable, is_edg
 
 from time import perf_counter
 
-def build_shape(graph: Graph, cycles: list) -> Shape:
+def build_shape(graph: Graph, cycles: list, iterations: int = 1) -> Shape:
     timer_start = perf_counter()
     is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable, variable_to_edge = _initialize_variables(graph)
     with Glucose42(with_proof=True) as solver:
@@ -210,6 +210,7 @@ def build_shape(graph: Graph, cycles: list) -> Shape:
         print(f"SAT solving time: {sat_solve_time}")
         print(f"SAT total time: {sat_contraints_time + sat_solve_time}")
         if solved:
+            print(f"Number of iterations: {iterations}")
             return _model_solution_to_shape(graph, solver.get_model(), is_edge_up_variable, is_edge_down_variable, is_edge_right_variable, is_edge_left_variable)
         else:
             print("NOT SOLVED")
@@ -243,7 +244,7 @@ def build_shape(graph: Graph, cycles: list) -> Shape:
                         print("removed edge: ", edge)
                         print("added node: ", new_node)
                         print("TRYING AGAIN")
-                        return build_shape(graph, cycles)
+                        return build_shape(graph, cycles, iterations+1)
             exception = (
                 f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
                 f"DID NOT FOUND A GOOD CLAUSE\n"

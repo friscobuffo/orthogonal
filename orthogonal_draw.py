@@ -1,5 +1,5 @@
 from shape_builder import build_shape
-from example_graphs import all_example_graphs_indexes, get_example_graph, generate_random_graph
+from example_graphs import all_example_graphs_indexes, get_example_graph, generate_good_random_graph
 from shape_to_positions import shape_to_nodes_positions_gurobi
 from position_to_drawing import nodes_positions_to_drawing
 from graph import Graph
@@ -25,8 +25,9 @@ def make_orthogonal_draw(graph: Graph, draw_to_screen: bool):
             print("Error:")
             print("graph:\n", graph)
             print("shape:\n", shape)
+            print("cycles:\n", cycles)
             print("Error:", e)
-        print("finished...\n\n\n")        
+        print("finished...\n\n\n")
 
 if __name__ == "__main__":
     args = set(sys.argv[1:])
@@ -38,7 +39,7 @@ if __name__ == "__main__":
             sleep(.5)
     if "random" in args:
         while True:
-            graph = generate_random_graph(14, 22)
+            graph = generate_good_random_graph(10, 17)
             make_orthogonal_draw(graph, draw)
             if input("Press enter to continue, or q to quit: ") == "q":
                 break
