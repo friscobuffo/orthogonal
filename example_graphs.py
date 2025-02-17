@@ -258,8 +258,13 @@ def graph11():
 
     return graph
 
+# proof that a random 2-cycle cover is not sufficient to find a shape
 def graph12():
-    graph = Graph(12)
+    graph = Graph(16)
+    graph.add_edge(0, 12)
+    graph.add_edge(12, 13)
+    graph.add_edge(13, 6) 
+    
     graph.add_edge(0, 1)
     graph.add_edge(0, 6)
     graph.add_edge(2, 1)
@@ -273,11 +278,19 @@ def graph12():
 
     graph.add_edge(5, 10)
     graph.add_edge(10, 4)
-
+    graph.add_edge(10, 14)
+    graph.add_edge(15, 14)
+    graph.add_edge(5, 15)
+    
     graph.add_edge(4, 11)
     graph.add_edge(8, 11)
-     
     return graph
+
+def graph13():  
+    # g = generate_grid_graph(11, 12)
+    g = generate_triangles_graph(3)
+    print(g)
+    return g
 
 def get_example_graph(n):
     if n == 1:
@@ -304,10 +317,12 @@ def get_example_graph(n):
         return graph11()
     if n == 12:
         return graph12()
+    if n == 13:
+        return graph13()
     return None
 
 def all_example_graphs_indexes():
-    return range(1, 13)
+    return range(13,14)
 
 def generate_random_graph_tree(number_of_nodes: int):
     import random
@@ -387,4 +402,55 @@ def generate_grid_graph(n,m):
     for i in range(m):
         g.add_edge(n+i, (2*n)+(2*m)-i-1)
   
+    return g
+
+
+def starting_nodes(g, n, s1, s2):
+    g.add_edge(0, 3)
+    g.add_edge(0, s1)
+    g.add_edge(1, s1)
+    g.add_edge(2, s1+1)
+    g.add_edge(2*n+4, s2)
+    g.add_edge(2*n+3, s2)
+    g.add_edge(2*n+2, s2+1)
+    g.add_edge(6*n+5, 4*n+5)
+    g.add_edge(6*n+5, 4*n+6)
+    g.add_edge(6*n+4, 4*n+4)
+    g.add_edge(6*n+4, 6*n+5,)
+    
+
+def ending_nodes(g, n):
+    g.remove_edge(2*n+3,2*n+2) 
+    g.remove_edge(2*n+2,2*n+1) 
+    g.add_edge(2*n+1, 2*n+4)
+    g.add_edge(2*n+3, 2*n+4)
+
+# n: number of nodes per side - 2 
+def generate_triangles_graph(n):
+    num_nodes = 6*n + 6
+    g = Graph(num_nodes)
+    
+    for i in range(2*n+3):
+        g.add_edge(i, i+1)
+        g.add_edge(i, i+2)
+        
+    ending_nodes(g, n)
+    g.remove_edge(1,2)
+    g.remove_edge(3,2)
+    
+    s1 = 2*n + 5
+    # 2*n+5 + 2*n+2 = 4*n+7
+    s2 = 4*n+7
+    starting_nodes(g, n, s1, s2)
+    
+    for i in range(s1, s2-2):
+        g.add_edge(i, i+1)
+        g.add_edge(i, i+2)
+        
+    ending_nodes(g, 2*n+1)
+    
+    for i in range(s2, num_nodes-2):
+        g.add_edge(i, i+1)
+        g.add_edge(i, i+2)
+    
     return g
