@@ -367,3 +367,24 @@ def generate_good_random_graph(min_number_of_nodes: int, min_number_of_edges: in
             edges_left_to_add -= 1
     remove_3_cycles(graph)
     return graph
+
+    
+def generate_grid_graph(n,m):
+    num_nodes = 2*n + 2*m - 4
+    
+    g = Graph(num_nodes)
+    for i in range(num_nodes-1):
+        g.add_edge(i, i+1)
+        
+    g.add_edge(0, num_nodes-1)
+
+    # i+(n-i)+(m-2)+n-i-1
+    # i+n+n+(m-i)+(m-i)-1
+    for i in range(1, n-1):
+        g.add_edge(i, (2*n)+m-i-3)
+    
+    m -= 2
+    for i in range(m):
+        g.add_edge(n+i, (2*n)+(2*m)-i-1)
+  
+    return g
